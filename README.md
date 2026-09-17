@@ -1,5 +1,7 @@
 # mebet
 
+[![tests](https://github.com/AshwathRV10/mebet/actions/workflows/tests.yml/badge.svg)](https://github.com/AshwathRV10/mebet/actions/workflows/tests.yml)
+
 A locally run sports match prediction engine. You name a specific fixture; it
 gathers real data, fits statistical models on history that existed before the
 match, and produces probabilities with the evidence behind them.
@@ -89,13 +91,13 @@ make ingest                     # ~10 seasons across 5 leagues (a few minutes)
 make serve                      # http://127.0.0.1:8000
 ```
 
-Or from the command line:
+`make setup` installs the package, so `mebet` is on the path:
 
 ```bash
-.venv/bin/python -m mebet.cli analyze \
+.venv/bin/mebet analyze \
   --competition ENG.1 --home "Manchester City" --away "Liverpool" --date 2026-09-26
 
-.venv/bin/python -m mebet.cli backtest \
+.venv/bin/mebet backtest \
   --competition ENG.1 --from 2024-08-01 --to 2026-05-31
 ```
 
@@ -151,11 +153,17 @@ front of it before doing so.
 ## Testing
 
 ```bash
-make test      # 62 tests
+make test      # 63 tests
 ```
 
 The suite covers leakage (11 tests), betting-odds exclusion, team-identity
 resolution, model distributions, data-quality tiers and target derivation.
+
+It is hermetic — synthetic fixtures and temporary databases, no third-party
+feed — and is verified to pass with every outbound socket blocked, so CI never
+depends on someone else's uptime. GitHub Actions runs it on Python 3.11 and
+3.12, plus a separate job that installs the pinned `requirements.txt` so the
+documented setup cannot rot unnoticed.
 
 ## Honest limitations
 

@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mebet"
+version = "0.1.0"
+description = "Local-first, evidence-based sports match prediction"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+
+# Lower bounds rather than pins: requirements.txt carries the exact versions
+# this build was developed against, for reproducible local installs, while the
+# package itself stays installable alongside other things.
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "pandas>=2.1",
+    "scikit-learn>=1.3",
+    "SQLAlchemy>=2.0",
+    "fastapi>=0.110",
+    "uvicorn>=0.27",
+    "pydantic>=2.5",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+mebet = "mebet.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["mebet*"]
+
+[tool.setuptools.package-data]
+# The frontend is served by the backend, so it must travel with the package.
+mebet = ["web/*.html", "web/*.css", "web/*.js"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["ignore::DeprecationWarning"]

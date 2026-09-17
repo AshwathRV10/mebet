@@ -17,24 +17,25 @@ setup:
 	python3 -m venv $(VENV)
 	$(PIP) install --upgrade pip
 	$(PIP) install -r requirements.txt
+	$(PIP) install -e . --no-deps
 
 init:
-	$(PY) -m mebet.cli init
+	$(VENV)/bin/mebet init
 
 sources:
-	$(PY) -m mebet.cli sources
+	$(VENV)/bin/mebet sources
 
 ingest:
-	$(PY) -m mebet.cli ingest ENG.1 ESP.1 ITA.1 GER.1 FRA.1 --seasons 10 --players
+	$(VENV)/bin/mebet ingest ENG.1 ESP.1 ITA.1 GER.1 FRA.1 --seasons 10 --players
 
 backtest:
-	$(PY) -m mebet.cli backtest --competition ENG.1 --from 2024-08-01 --to 2026-05-31
+	$(VENV)/bin/mebet backtest --competition ENG.1 --from 2024-08-01 --to 2026-05-31
 
 serve:
-	$(PY) -m mebet.cli serve
+	$(VENV)/bin/mebet serve
 
 test:
-	$(PY) -m pytest tests/ -q
+	$(VENV)/bin/pytest
 
 clean:
 	rm -rf data/http_cache logs/*.log .pytest_cache
