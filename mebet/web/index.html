@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mebet - sports prediction</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ctext y=%2726%27 font-size=%2726%27%3E%E2%97%88%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">◈</span>
+    <div>
+      <h1>mebet</h1>
+      <p class="tagline">Evidence-based match prediction</p>
+    </div>
+  </div>
+  <div class="status" id="source-status" title="Data source availability"></div>
+</header>
+
+<main>
+  <!-- Step 1: pick a match -->
+  <section class="card" id="query-card">
+    <h2>Analyze a match</h2>
+    <form id="analyze-form">
+      <div class="grid">
+        <label>Sport
+          <select id="sport" name="sport">
+            <option value="football">Football / Soccer</option>
+          </select>
+        </label>
+        <label>Competition
+          <select id="competition" name="competition" required></select>
+        </label>
+      </div>
+      <div class="grid">
+        <label>Home team
+          <input id="home_team" name="home_team" list="team-list" autocomplete="off" required
+                 placeholder="e.g. Manchester City">
+        </label>
+        <label>Away team
+          <input id="away_team" name="away_team" list="team-list" autocomplete="off" required
+                 placeholder="e.g. Liverpool">
+        </label>
+      </div>
+      <datalist id="team-list"></datalist>
+      <div class="grid">
+        <label>Date
+          <input type="date" id="date" name="date" required>
+        </label>
+        <label>Kickoff time <span class="hint">(optional)</span>
+          <input type="time" id="time" name="time">
+        </label>
+      </div>
+      <details class="advanced">
+        <summary>Options</summary>
+        <label class="inline"><input type="checkbox" id="refresh" checked>
+          Fetch the newest data before analysing</label>
+        <label class="inline"><input type="checkbox" id="players" checked>
+          Include player-level predictions</label>
+        <label class="inline">Seasons of history
+          <input type="number" id="seasons" value="8" min="2" max="20"></label>
+      </details>
+      <div class="actions">
+        <button type="submit" class="primary" id="analyze-btn">ANALYZE MATCH</button>
+        <button type="button" id="fixtures-btn" class="ghost">Show upcoming fixtures</button>
+      </div>
+    </form>
+    <div id="fixtures-panel" class="fixtures hidden"></div>
+  </section>
+
+  <!-- Step 3: progress -->
+  <section class="card hidden" id="progress-card">
+    <h2>Working</h2>
+    <ol class="pipeline" id="pipeline-steps">
+      <li data-step="collect">Collecting data</li>
+      <li data-step="validate">Validating data</li>
+      <li data-step="analyse">Analysing</li>
+      <li data-step="models">Running models</li>
+      <li data-step="predict">Generating predictions</li>
+    </ol>
+    <p class="muted" id="progress-note"></p>
+  </section>
+
+  <!-- Step 4: results -->
+  <section id="results" class="hidden">
+    <div class="card headline">
+      <div class="match-title">
+        <h2 id="match-teams"></h2>
+        <p class="muted" id="match-meta"></p>
+      </div>
+
+      <div id="warnings"></div>
+
+      <div class="outcome" id="outcome"></div>
+
+      <div class="score-row">
+        <div class="score-block">
+          <span class="label">Most likely score</span>
+          <span class="value" id="likely-score">-</span>
+        </div>
+        <div class="score-block">
+          <span class="label">Expected goals</span>
+          <span class="value" id="expected-goals">-</span>
+        </div>
+        <div class="score-block">
+          <span class="label">Data quality</span>
+          <span class="value" id="quality-tier">-</span>
+        </div>
+        <div class="score-block">
+          <span class="label">Prediction version</span>
+          <span class="value" id="version">-</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="refresh-btn" class="primary">REFRESH DATA &amp; RECALCULATE</button>
+        <span class="muted" id="generated-at"></span>
+      </div>
+      <p class="muted small" id="change-summary"></p>
+    </div>
+
+    <div id="sections"></div>
+  </section>
+</main>
+
+<footer>
+  <p>Predictions are statistical estimates from public sports data.
+     Betting odds are excluded from the models by design.</p>
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

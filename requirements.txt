@@ -1,0 +1,16 @@
+# Runtime dependencies. Pinned to the versions this build was developed and
+# tested against; loosen if you prefer.
+fastapi==0.141.1
+numpy==2.4.6
+pandas==3.0.5
+pydantic==2.13.5
+pydantic-settings==2.15.0
+pydantic_core==2.46.5
+requests==2.34.2
+scikit-learn==1.9.1
+scipy==1.17.1
+SQLAlchemy==2.0.54
+uvicorn==0.53.0
+
+# Development / testing
+pytest==9.1.1
