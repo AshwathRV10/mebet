@@ -1,14 +1,18 @@
 name: tests
 
 on:
+  # Only main on push: a branch with an open PR is already covered by the
+  # pull_request event, and listing both ran every commit twice.
   push:
-    branches: ["main", "claude/**"]
+    branches: ["main"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
 
 concurrency:
-  group: tests-${{ github.ref }}
+  # head_ref is the source branch on a pull_request and empty on a push, so a
+  # PR and its branch share one group and superseded runs are cancelled.
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
