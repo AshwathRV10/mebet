@@ -379,6 +379,26 @@ class ExplanationEngine:
     def _model_internals(self, diagnostics: dict) -> list[Factor]:
         """Expose what the fitted model itself believes about the two teams."""
         out = []
+        for side, form in (("home", self.home), ("away", self.away)):
+            from_prior = diagnostics.get(f"{side}_rated_from_prior")
+            promoted = diagnostics.get(f"{side}_newly_promoted")
+            if not (from_prior or promoted):
+                continue
+            statement = (
+                f"{form.team_name} has no history in this competition's recent window, so its "
+                f"rating is the model's prior for a typical newly promoted side"
+                if from_prior else
+                f"{form.team_name} was not in this competition last season, so its rating is "
+                f"shrunk toward a typical newly promoted side until more matches accumulate"
+            )
+            out.append(Factor(
+                category="model",
+                favours="away" if side == "home" else "home",
+                statement=statement,
+                impact=0.5 if from_prior else 0.35,
+                evidence={"side": side, "rated_from_prior": bool(from_prior),
+                          "newly_promoted": bool(promoted)},
+            ))
         if all(k in diagnostics for k in ("home_attack", "away_defence", "home_advantage")):
             out.append(Factor(
                 category="model",

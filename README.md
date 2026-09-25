@@ -35,51 +35,49 @@ Enter a fixture  →  collect  →  validate  →  build features  →  fit mode
 
 ## Measured performance
 
-Not a claim — output from `mebet backtest`, walk-forward over Premier League
-matches with models refitted every 30 days and features built at each match's
-own kickoff.
+Not a claim — output from `scripts/accuracy_study/final_test.py`. Every model
+setting was chosen on 2021-22 and 2022-23; the table below is the **one** run
+on the later, untouched window. Walk-forward, all five leagues, models refitted
+every 28 days, ensemble weights fitted on the validation seasons only.
 
-**3 seasons, 1,123 out-of-sample matches (2023-08 to 2026-05):**
+**Test window 2023-08 to 2026-05 — 5,165 matches:**
 
-| model | accuracy | log loss | Brier | calibration error |
-|---|---|---|---|---|
-| **dixon_coles** | **0.520** | **0.9803** | **0.5840** | **0.0201** |
-| ensemble (equal weights) | 0.527 | 0.9827 | 0.5848 | 0.0253 |
-| elo | 0.524 | 0.9916 | 0.5902 | 0.0302 |
-| logistic | 0.525 | 1.0081 | 0.5988 | 0.0321 |
-| *base rate (constant)* | *0.417* | *1.0720* | *0.6538* | — |
-
-That is **8.55% better log loss than predicting the historical base rate every
-time**, and 10 accuracy points better. For a model using no market information,
-that is a real but modest edge — which is what an honest football model looks
-like.
-
-Other markets, same run:
-
-| market | metric | value | base rate |
+| | log loss | Brier | accuracy |
 |---|---|---|---|
-| over/under 2.5 goals | log loss | 0.6838 | 0.5895 |
-| both teams to score | log loss | 0.6861 | 0.5841 |
-| total goals | MAE / RMSE | 1.32 / 1.65 | — |
-| total corners | MAE / RMSE | 2.82 / 3.50 | — |
-| total cards | MAE / RMSE | 1.82 / 2.33 | — |
+| **current ensemble** | **0.9840** | **0.5863** | 0.524 |
+| previous ensemble (before the accuracy study) | 0.9860 | 0.5876 | 0.525 |
+| *base rate (predict league frequencies every time)* | *1.0754* | — | — |
 
-**Ensemble weights are earned, not assumed.** Weights are fitted by log-loss
-minimisation on one slice and validated on a later, unseen slice:
+That is **8.5% better log loss than the base rate**. For a model using no
+market information that is a real but modest edge — which is what an honest
+football model looks like.
 
-```
-fitted on 673 matches, scored on 450 later matches
-weighted ensemble   1.01728   <- best
-equal weights       1.01856
-best single model   1.01891   (dixon_coles)
-```
+What the accuracy study changed, measured on the same window:
 
-The margin is small. It is reported rather than inflated.
+| change | effect on the test window | 95% interval |
+|---|---|---|
+| whole system, 1X2 log loss | −0.0020 | −0.0031 to −0.0009 |
+| goals model, over/under 2.5 log loss | −0.0088 | −0.0121 to −0.0057 |
+| Elo alone | −0.0037 | −0.0054 to −0.0019 |
+| matches that used to be declined | +49 now predicted, beating base rates by 0.16 log loss | −0.30 to −0.01 |
 
-**Known weaknesses**, visible in the same output: the corners model is the
-least well calibrated (calibration error ~0.07 against ~0.02 for match result)
-and over-predicts slightly (bias +0.33 corners). Expected-goals data is absent
-from the bulk feed, so xG-based features are unavailable for team ratings.
+Honest reading: the gain is real in every league and clear pooled, but small
+for match result. It is largest for **goals markets**, because the change that
+mattered most — fitting team ratings on shots as well as goals — improves
+expected goals directly. Hit rate barely moves: the gain is in how good the
+probabilities are, not in picking different favourites. It was also smaller
+here than on the validation seasons, which is exactly why the test window was
+held back.
+
+What was tried and **not** kept, because it did not help: a stronger shrinkage
+prior (hurt established teams), a draw-rate correction (draws were already
+calibrated to within 0.1 percentage points), and pure shot-based ratings
+(worse than the goals/shots blend). Details in
+[`scripts/accuracy_study/`](scripts/accuracy_study/README.md).
+
+**Known weaknesses.** The corners model is the least well calibrated component.
+The remaining gap to a sharp bookmaker is mostly information this data does
+not contain — confirmed lineups, and injury news outside the Premier League.
 
 ## Quick start
 
@@ -153,7 +151,7 @@ front of it before doing so.
 ## Testing
 
 ```bash
-make test      # 63 tests
+make test      # 77 tests
 ```
 
 The suite covers leakage (11 tests), betting-odds exclusion, team-identity

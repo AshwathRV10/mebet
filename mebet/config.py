@@ -86,7 +86,7 @@ class Settings:
 
     # --- modelling ------------------------------------------------------
     # Half-life in days for time-decay weighting of historical matches.
-    time_decay_half_life_days: float = _env_float("MEBET_HALF_LIFE_DAYS", 180.0)
+    time_decay_half_life_days: float = _env_float("MEBET_HALF_LIFE_DAYS", 270.0)
     monte_carlo_iterations: int = _env_int("MEBET_MC_ITERATIONS", 20000)
     random_seed: int = _env_int("MEBET_RANDOM_SEED", 20240917)
 

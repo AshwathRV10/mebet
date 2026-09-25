@@ -30,7 +30,7 @@ class TrainingContext:
     repo: AsOfRepository
     competition_ids: Sequence[int]
     as_of: dt.datetime
-    half_life_days: float = 180.0
+    half_life_days: float = 270.0
     min_matches: int = 60
     seasons_back: int = 5
     #: Shared in-memory index. Models that need features at many historical

@@ -119,11 +119,12 @@ class EnsembleModel(PredictionModel):
     yields_score_matrix = True
 
     def __init__(self, models: Sequence[PredictionModel],
-                 weights: Optional[dict[str, float]] = None) -> None:
+                 weights: Optional[dict[str, float]] = None,
+                 weight_source: Optional[str] = None) -> None:
         super().__init__()
         self.models = list(models)
         self.weights = dict(weights or {})
-        self.weight_source = "equal" if not weights else "measured"
+        self.weight_source = weight_source or ("measured" if weights else "equal")
 
     def fit(self, ctx: TrainingContext) -> "EnsembleModel":
         for model in self.models:

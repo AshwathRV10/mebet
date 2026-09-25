@@ -65,7 +65,8 @@ def test_model_declines_when_data_is_thin(session, seeded):
 
 
 def test_model_declines_for_an_unknown_team(seeded, ctx):
-    model = DixonColesModel(min_matches=20).fit(ctx)
+    # With the promoted-team prior disabled, an unseen team cannot be rated.
+    model = DixonColesModel(min_matches=20, rate_unrated_teams=False).fit(ctx)
     request = PredictionRequest(
         home_team_id=999999, away_team_id=seeded["teams"][1].id,
         competition_id=seeded["competition"].id, kickoff=ctx.as_of,

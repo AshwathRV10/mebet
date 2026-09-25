@@ -69,7 +69,7 @@ Measured: 590ms → 9.6ms per feature build, with identical output.
 
 | model | method | produces |
 |---|---|---|
-| `dixon_coles` | time-decayed bivariate Poisson, low-score correction, MLE | full scoreline matrix |
+| `dixon_coles` | time-decayed bivariate Poisson, low-score correction, fitted on a goals/shots blend with a shrinkage prior | full scoreline matrix |
 | `elo` | sequential ratings, margin-of-victory scaling, learned draw curve | 1X2 |
 | `logistic` | multinomial regression on 23 engineered features | 1X2 |
 | `corners` | multiplicative rate model, Poisson or negative binomial | corner totals |
@@ -79,6 +79,17 @@ Measured: 590ms → 9.6ms per feature build, with identical output.
 
 Design notes worth knowing:
 
+- **Ratings are fitted on shots as well as goals.** Goals are a noisy measure
+  of how well a team played; shots on target are far steadier. The rating
+  target is 50% goals, 35% shots on target and 15% total shots, each shot
+  count converted to goals at the league's own rate as measured in the
+  training window. The low-score correction still uses the real scorelines.
+- **Thin histories are shrunk, not trusted or declined.** A weak ridge prior
+  pulls ratings toward average - or, for a side absent last season, toward a
+  typical promoted team. It is negligible for established teams and decisive
+  for a club three matches into its first season, which the model now rates
+  instead of refusing.
+- **Every setting is chosen by measurement.** See *Tuning* below.
 - **Dixon-Coles is primary** because a single joint distribution over scorelines
   makes over/under, both-teams-to-score, correct score and clean sheets mutually
   consistent. Estimating them separately invites contradictions.
@@ -108,6 +119,24 @@ football model.
 
 Ensemble weights are fitted on one slice and validated on a later unseen slice,
 so the benefit of weighting is measured rather than asserted.
+
+## Tuning
+
+Model settings are chosen with `mebet.backtest.evaluate`, a fast walk-forward
+harness built around two ways tuning fools itself:
+
+- **Tuning on the reported data.** Choices are made on a validation window
+  (2021-22 and 2022-23); accuracy is reported on a later test window
+  (2023-08 to 2026-05) that is scored once, after every choice is fixed.
+- **Mistaking noise for gain.** Configurations are compared on the identical
+  set of matches, with a bootstrap interval that resamples whole weeks.
+
+The full study, including the ideas that did not work, is in
+`scripts/accuracy_study/`. Ensemble weights shipped as defaults were fitted
+on the validation window; a backtest you run yourself replaces them, but only
+if it measured the same model version (`MODEL_VERSION` in
+`models/registry.py`) - weights learned for one set of models say nothing
+about another.
 
 ## Prediction versioning
 
