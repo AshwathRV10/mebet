@@ -33,7 +33,7 @@ class EloModel(PredictionModel):
 
     def __init__(self, k_factor: float = 20.0, initial_rating: float = 1500.0,
                  home_advantage: float = 60.0, scale: float = 400.0,
-                 season_regression: float = 0.25, min_matches: int = 60) -> None:
+                 season_regression: float = 0.1, min_matches: int = 60) -> None:
         super().__init__(k_factor=k_factor, initial_rating=initial_rating,
                          home_advantage=home_advantage, scale=scale,
                          season_regression=season_regression, min_matches=min_matches)

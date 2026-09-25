@@ -35,7 +35,7 @@ from ..db.repository import AsOfRepository
 from ..logging_setup import get_logger
 from ..models.base import PredictionRequest, TrainingContext
 from ..models.ensemble import EnsembleModel, fit_weights
-from ..models.registry import build_count_models, build_outcome_models
+from ..models.registry import MODEL_VERSION, build_count_models, build_outcome_models
 from ..features.football import build_match_features
 from . import metrics as M
 
@@ -51,7 +51,7 @@ class BacktestConfig:
     to_date: dt.date
     refit_days: int = 30
     seasons_back: int = 5
-    half_life_days: float = 180.0
+    half_life_days: float = 270.0
     model_keys: Optional[Sequence[str]] = None
     include_counts: bool = True
     include_ensemble: bool = True
@@ -413,10 +413,12 @@ class BacktestRunner:
             label=config.label(),
             spec={
                 "competition": config.competition_key,
+                "model_version": MODEL_VERSION,
                 "refit_days": config.refit_days,
                 "seasons_back": config.seasons_back,
-                "half_life_days": config.half_life_days,
                 "goal_lines": list(config.goal_lines),
+                "ensemble_weights": result.ensemble_weights,
+                "ensemble_validation": result.ensemble_validation,
             },
             from_date=config.from_date,
             to_date=config.to_date,
@@ -447,35 +449,22 @@ class BacktestRunner:
 
 
 def latest_ensemble_weights(session: Session, competition_key: str) -> Optional[dict[str, float]]:
-    """Weights from the most recent backtest of this competition, if any."""
-    run = session.execute(
+    """Weights from the most recent backtest of this competition *and* model version.
+
+    A backtest of an earlier model version measured different models, so its
+    weights are not reused; the caller then falls back to the validated
+    defaults shipped with the current version.
+    """
+    runs = session.execute(
         select(BacktestRun)
         .where(BacktestRun.spec["competition"].as_string() == competition_key)
         .order_by(BacktestRun.created_at.desc())
-    ).scalars().first()
-    if run is None:
-        return None
-    rows = session.execute(
-        select(BacktestMetric)
-        .where(BacktestMetric.run_id == run.id, BacktestMetric.market == "1x2",
-               BacktestMetric.metric == "log_loss")
     ).scalars()
-    losses = {r.model_key: r.value for r in rows if r.model_key != "ensemble"}
-    if len(losses) < 2:
-        return None
-    # Recover the stored optimised weights when present, else fall back to
-    # an inverse-loss heuristic that still reflects measured performance.
-    import json
-    try:
-        notes = run.notes or ""
-        marker = "ensemble weights: "
-        if marker in notes:
-            raw = notes.split(marker, 1)[1].strip()
-            weights = json.loads(raw.replace("'", '"'))
-            if isinstance(weights, dict) and weights:
-                return {k: float(v) for k, v in weights.items()}
-    except (ValueError, json.JSONDecodeError):
-        pass
-    inverse = {k: 1.0 / max(v, 1e-6) for k, v in losses.items()}
-    total = sum(inverse.values())
-    return {k: v / total for k, v in inverse.items()}
+    for run in runs:
+        spec = run.spec or {}
+        if spec.get("model_version") != MODEL_VERSION:
+            continue
+        weights = spec.get("ensemble_weights") or {}
+        if len(weights) >= 2:
+            return {k: float(v) for k, v in weights.items()}
+    return None

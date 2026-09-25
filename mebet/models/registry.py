@@ -19,6 +19,22 @@ from .logistic import LogisticOutcomeModel
 
 log = get_logger("models.registry")
 
+#: Identifies the modelling configuration. Ensemble weights measured by a
+#: backtest are only reused by the same version: weights learned for one set of
+#: models say nothing reliable about a different set.
+MODEL_VERSION = "2026.09-shot-ratings"
+
+#: Ensemble weights used when no backtest of the current model version has
+#: been run. Fitted by log-loss minimisation on walk-forward predictions for
+#: 2021-22 and 2022-23 across all five leagues (3,583 matches) - seasons that
+#: precede the window used to report accuracy. Reproduce with
+#: ``scripts/accuracy_study/final_test.py``.
+DEFAULT_ENSEMBLE_WEIGHTS: dict[str, float] = {
+    "dixon_coles": 0.3893,
+    "elo": 0.3961,
+    "logistic": 0.2147,
+}
+
 #: Models that produce match-outcome probabilities and can be ensembled.
 OUTCOME_MODELS: dict[str, Callable[[], PredictionModel]] = {
     "dixon_coles": DixonColesModel,
@@ -52,7 +68,12 @@ def build_count_models(keys: Optional[Iterable[str]] = None) -> list[PredictionM
 
 def build_ensemble(weights: Optional[dict[str, float]] = None,
                    keys: Optional[Iterable[str]] = None) -> EnsembleModel:
-    return EnsembleModel(build_outcome_models(keys), weights=weights)
+    """Ensemble with measured weights when given, else the validated defaults."""
+    if weights:
+        return EnsembleModel(build_outcome_models(keys), weights=weights,
+                             weight_source="measured by backtest")
+    return EnsembleModel(build_outcome_models(keys), weights=dict(DEFAULT_ENSEMBLE_WEIGHTS),
+                         weight_source="validated default")
 
 
 def all_model_keys() -> list[str]:
